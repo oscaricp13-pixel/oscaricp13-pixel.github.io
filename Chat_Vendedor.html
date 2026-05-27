@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Vendedor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI';background:#f5f5f5;height:100vh;display:flex;justify-content:center;align-items:center;}
+.wrapper{width:95%;max-width:750px;height:90vh;display:flex;border-radius:20px;overflow:hidden;box-shadow:0 5px 20px rgba(0,0,0,0.15);}
+.sidebar{width:220px;flex-shrink:0;background:#006747;display:flex;flex-direction:column;}
+.sidebar-header{padding:15px;color:white;font-weight:bold;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;gap:8px;}
+.btn-regresar{background:transparent;border:none;color:white;cursor:pointer;font-size:18px;padding:0;width:auto;line-height:1;}
+.sidebar-search{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.15);}
+.sidebar-search input{width:100%;padding:7px 10px;border-radius:15px;border:none;font-size:13px;outline:none;}
+.compradores-list{flex:1;overflow-y:auto;}
+.comprador-item{padding:12px 15px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;transition:.2s;}
+.comprador-item:hover{background:rgba(255,255,255,0.1);}
+.comprador-item.active{background:rgba(255,255,255,0.2);}
+.comp-avatar{width:36px;height:36px;border-radius:50%;background:#C5A059;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;flex-shrink:0;}
+.comp-nombre{color:white;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sin-compradores{color:rgba(255,255,255,0.6);font-size:13px;padding:20px 15px;text-align:center;line-height:1.8;}
+.chat-panel{flex:1;display:flex;flex-direction:column;background:white;}
+.chat-header{background:#005a3e;color:white;padding:13px 15px;display:flex;align-items:center;gap:10px;}
+.avatar{width:42px;height:42px;border-radius:50%;background:#C5A059;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:17px;flex-shrink:0;}
+.header-info strong{display:block;font-size:15px;}
+.status{font-size:12px;color:#d4ffd9;}
+.chat-messages{flex:1;padding:15px;overflow-y:auto;background:#e5ddd5;display:flex;flex-direction:column;gap:8px;}
+.message{max-width:75%;padding:10px 15px;border-radius:15px;word-wrap:break-word;font-size:14px;}
+.message .hora{font-size:10px;color:rgba(0,0,0,0.4);margin-top:4px;text-align:right;}
+.buyer{align-self:flex-start;background:white;border-bottom-left-radius:4px;}
+.seller{align-self:flex-end;background:#dcf8c6;border-bottom-right-radius:4px;}
+.chat-input{display:flex;padding:10px;background:white;gap:10px;border-top:1px solid #eee;}
+.chat-input input{flex:1;padding:12px;border-radius:25px;border:1px solid #ccc;outline:none;font-size:14px;}
+.chat-input input:focus{border-color:#006747;}
+.chat-input input:disabled{background:#f5f5f5;cursor:not-allowed;}
+.send-btn{background:#006747;color:white;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;font-size:20px;flex-shrink:0;transition:.2s;}
+.send-btn:hover{transform:scale(1.05);}
+.send-btn:active{transform:scale(0.9);}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.placeholder-chat{flex:1;display:flex;align-items:center;justify-content:center;color:#aaa;flex-direction:column;gap:10px;background:#e5ddd5;}
+.placeholder-chat span{font-size:40px;}
+.placeholder-chat p{font-size:14px;}
+@media(max-width:600px){
+  .wrapper{width:100%;height:100vh;border-radius:0;flex-direction:column;}
+  .sidebar{width:100%;height:auto;flex-shrink:0;}
+  .compradores-list{display:flex;flex-direction:row;overflow-x:auto;padding:5px;}
+  .comprador-item{flex-direction:column;min-width:80px;padding:8px 6px;text-align:center;border-bottom:none;}
+  .comp-nombre{font-size:12px;}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <button class="btn-regresar" onclick="window.location.href='InterfazVendedor.html'">←</button>
+      💬 Compradores
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="buscarComp" placeholder="Buscar..." oninput="filtrarCompradores()">
+    </div>
+    <div class="compradores-list" id="compradoresList">
+      <div class="sin-compradores">Cargando...</div>
+    </div>
+  </div>
+
+  <div class="chat-panel">
+    <div class="chat-header" id="chatHeader" style="display:none;">
+      <div class="avatar" id="avatarComp">?</div>
+      <div class="header-info">
+        <strong id="nombreComp">--</strong>
+        <span class="status">En línea</span>
+      </div>
+    </div>
+    <div id="placeholderChat" class="placeholder-chat">
+      <span>💬</span>
+      <p>Selecciona un comprador para chatear</p>
+    </div>
+    <div class="chat-messages" id="messages" style="display:none;"></div>
+    <div class="chat-input">
+      <input type="text" id="msg" placeholder="Selecciona una conversación..." disabled autocomplete="off">
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const miUsuario = (localStorage.getItem("userEmail") || "").trim();
+const miNombre  = (localStorage.getItem("userName")  || "Vendedor").trim();
+
+console.log("=== CHAT VENDEDOR ===");
+console.log("miUsuario:", JSON.stringify(miUsuario));
+
+let compradorActual  = null;
+let ultimoId         = 0;
+let polling          = null;
+let todosCompradores = [];
+
+// ── CARGAR COMPRADORES SIN FILTRO ──────────────────────────────
+// NO se pasa ?vendedor= para que devuelva TODOS los compradores
+async function cargarCompradores(){
+  try{
+    const res  = await fetch("obtener_compradores.php"); // sin parámetros
+    const data = await res.json();
+    console.log("Compradores:", data);
+    todosCompradores = data;
+    renderCompradores(data);
+  }catch(e){
+    document.getElementById("compradoresList").innerHTML =
+      '<div class="sin-compradores">Error al cargar.</div>';
+  }
+}
+
+function renderCompradores(lista){
+  const cont = document.getElementById("compradoresList");
+  if(!lista || !lista.length){
+    cont.innerHTML = '<div class="sin-compradores">No hay compradores registrados.</div>';
+    return;
+  }
+  cont.innerHTML = "";
+  lista.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "comprador-item" + (c.usuario === compradorActual ? " active" : "");
+    div.dataset.usuario = c.usuario;
+    div.innerHTML = `
+      <div class="comp-avatar">${c.nombre.charAt(0).toUpperCase()}</div>
+      <span class="comp-nombre">${escapeHtml(c.nombre)}</span>`;
+    div.onclick = () => seleccionarComprador(c.usuario, c.nombre);
+    cont.appendChild(div);
+  });
+}
+
+function filtrarCompradores(){
+  const q = document.getElementById("buscarComp").value.toLowerCase();
+  renderCompradores(todosCompradores.filter(c =>
+    c.nombre.toLowerCase().includes(q) || c.usuario.toLowerCase().includes(q)
+  ));
+}
+
+// ── SELECCIONAR COMPRADOR ──────────────────────────────────────
+function seleccionarComprador(usuario, nombre){
+  compradorActual = usuario;
+  ultimoId        = 0;
+
+  console.log("Comprador seleccionado:", JSON.stringify(usuario));
+  console.log("Yo (vendedor):", JSON.stringify(miUsuario));
+
+  document.getElementById("chatHeader").style.display      = "flex";
+  document.getElementById("placeholderChat").style.display = "none";
+  document.getElementById("messages").style.display        = "flex";
+  document.getElementById("nombreComp").textContent        = nombre;
+  document.getElementById("avatarComp").textContent        = nombre.charAt(0).toUpperCase();
+
+  const input = document.getElementById("msg");
+  input.disabled    = false;
+  input.placeholder = `Mensaje a ${nombre}...`;
+  document.getElementById("sendBtn").disabled = false;
+  input.focus();
+
+  document.querySelectorAll(".comprador-item").forEach(el =>
+    el.classList.toggle("active", el.dataset.usuario === usuario)
+  );
+
+  document.getElementById("messages").innerHTML = "";
+  if(polling) clearInterval(polling);
+  cargarMensajes();
+  polling = setInterval(cargarMensajes, 2000);
+}
+
+// ── CARGAR MENSAJES ────────────────────────────────────────────
+async function cargarMensajes(){
+  if(!compradorActual || !miUsuario) return;
+  try{
+    const url  = `obtener_mensajes.php?usuario1=${encodeURIComponent(miUsuario)}&usuario2=${encodeURIComponent(compradorActual)}&desde_id=${ultimoId}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if(data.length > 0){
+      console.log("Mensajes recibidos:", data.length, data);
+      const box   = document.getElementById("messages");
+      const abajo = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+      data.forEach(m => {
+        const div = document.createElement("div");
+        div.classList.add("message", m.de_usuario === miUsuario ? "seller" : "buyer");
+        div.innerHTML = `<div>${escapeHtml(m.mensaje)}</div><div class="hora">${m.hora}</div>`;
+        box.appendChild(div);
+        ultimoId = Math.max(ultimoId, parseInt(m.id));
+      });
+      if(abajo) box.scrollTop = box.scrollHeight;
+    }
+  }catch(e){ console.error("Error polling:", e); }
+}
+
+// ── ENVIAR MENSAJE ─────────────────────────────────────────────
+async function sendMessage(){
+  if(!compradorActual || !miUsuario) return;
+  const input = document.getElementById("msg");
+  const text  = input.value.trim();
+  if(!text) return;
+  input.value = "";
+
+  const payload = { de: miUsuario, para: compradorActual, mensaje: text };
+  console.log("Enviando:", payload);
+
+  try{
+    const res  = await fetch("enviar_mensaje.php",{
+      method:  "POST",
+      headers: {"Content-Type":"application/json"},
+      body:    JSON.stringify(payload)
+    });
+    const data = await res.json();
+    console.log("Respuesta:", data);
+    if(!data.success) alert("Error: " + data.error);
+    else cargarMensajes();
+  }catch(e){
+    console.error("Error enviando:", e);
+    input.value = text;
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+document.getElementById("msg").addEventListener("keypress", e => {
+  if(e.key === "Enter") sendMessage();
+});
+
+if(!miUsuario){
+  document.getElementById("compradoresList").innerHTML =
+    '<div class="sin-compradores">Debes iniciar sesión.<br><a href="Inicio.html" style="color:#C5A059;">Ir al login</a></div>';
+} else {
+  cargarCompradores();
+  setInterval(cargarCompradores, 10000);
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POTROTIENDA</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:'Segoe UI';
+  background:#f5f5f5;
+}
+
+/* HEADER */
+header{
+  background:#36997ae2;
+  color:white;
+  padding:10px 15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.logo{
+  color:#fdfdfc;
+  font-weight:bold;
+  font-size:22px;
+}
+
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+}
+
+.modal.active{
+  display:flex;
+}
+
+/* BUSCADOR */
+.search-bar{
+  flex:1;
+  min-width:150px;
+}
+
+.search-bar input{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+}
+
+/* CARRITO */
+.cart-btn{
+  background:#000000;
+  padding:8px 12px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+/* GRID */
+.products{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+@media(min-width:600px){
+  .products{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(min-width:900px){
+  .products{
+    grid-template-columns:repeat(5,1fr);
+  }
+}
+
+/* PRODUCTO */
+.product{
+  background:white;
+  padding:10px;
+  border-radius:15px;
+  text-align:center;
+  transition:all .4s ease;
+  cursor:pointer;
+}
+
+.product:hover{
+
+  transform:
+  scale(1.03)
+  translateY(-3px);
+
+  box-shadow:
+  0 10px 20px rgba(0,0,0,.15);
+
+  background:#2ac594e2;
+}
+
+.product:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.product:active{
+  transform:scale(.95);
+}
+
+
+.product img{
+  width:100%;
+  height:180px;
+  object-fit:contain;
+  border-radius:10px;
+}
+
+/* BOTONES */
+button{
+  background:
+    linear-gradient(
+      to right,
+      #32bc90e2,
+      #1c795c
+    );
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:20px;
+  width:100%;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+button:active{
+  transform:scale(.95);
+}
+
+/* CARRITO PANEL */
+.cart-panel{
+  position:fixed;
+  top:0;
+  right:-100%;
+  width:100%;
+  max-width:350px;
+  height:100%;
+  background:white;
+  padding:15px;
+  transition:.3s;
+  z-index:3000;
+  overflow:auto;
+}
+
+.cart-panel.active{
+  right:0;
+}
+
+.cart-btn:hover{
+ background:#519c85e2;
+ transform:scale(1.05);
+transition:.3s;
+}
+
+/* OVERLAY */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  z-index:2000;
+}
+
+.overlay.active{
+  display:block;
+}
+
+/* MODAL */
+.modal,
+.profile-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:5000;
+}
+.profile-modal.active{
+  display:flex;
+}
+
+.modal-box,
+.profile-box{
+  background:white;
+  padding:25px;
+  border-radius:20px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+}
+
+/* ESTRELLAS */
+.stars span{
+  font-size:25px;
+  color:gray;
+  cursor:pointer;
+}
+
+.stars span.active{
+  color:gold;
+}
+
+/* USER PANEL */
+.user-panel{
+  display:flex;
+  gap:10px;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+  
+
+
+<!-- HEADER -->
+<header>
+
+  <div class="logo">
+    POTROTIENDA
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Buscar productos...">
+  </div>
+
+  <div class="cart-btn" onclick="toggleCart()">
+    🛒 (<span id="count">0</span>)
+  </div>
+
+  <div class="user-panel">
+
+    <button
+      id="accountBtn"
+      style="width:auto;"
+      onclick="openProfile()">
+
+      👤 Mi cuenta
+
+    </button>
+
+    <button
+      style="width:auto;"
+      onclick="window.location.href='Chat_Comprador.html'">
+
+      💬 Chat
+
+    </button>
+
+  </div>
+
+</header>
+
+<!-- PRODUCTOS -->
+<section class="products" id="products"></section>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+
+<!-- CARRITO -->
+<div class="cart-panel" id="cart">
+
+  <h2>🛒 Carrito</h2>
+
+  <div id="cartItems"></div>
+
+  <h3>
+    Total: $<span id="total">0</span>
+  </h3>
+
+  <button onclick="checkout()">
+  Comprar
+</button>
+
+  <button onclick="clearCart()" style="margin-top:10px;">
+    Vaciar carrito
+  </button>
+
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="modal" id="modal">
+
+  <div class="modal-box">
+
+    <h2 id="mName"></h2>
+
+    <img id="mImg"
+    style="width:100%; height:200px; object-fit:contain;">
+
+    <p id="mDesc"></p>
+
+    <p id="mPrice"></p>
+
+    <p>
+      ⭐ Promedio:
+      <span id="mRating"></span>
+    </p>
+
+    <div class="stars" id="stars"></div>
+
+    <button onclick="saveRating()">
+      Calificar
+    </button>
+
+    <button onclick="closeModal()" style="margin-top:10px;">
+      Cerrar
+    </button>
+
+  </div>
+
+</div>
+
+<!-- MODAL PAGO -->
+<div class="modal" id="payModal">
+
+  <div class="modal-box">
+
+    <h2>💳 Método de pago</h2>
+
+    <label>
+      <input type="radio" name="pay" value="Tarjeta">
+      Tarjeta
+    </label>
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="pay" value="PayPal">
+      PayPal
+    </label>
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="pay" value="Transferencia">
+      Transferencia
+    </label>
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="pay" value="Efectivo">
+      Efectivo
+    </label>
+
+    <br><br>
+
+    <button onclick="confirmPay()">
+      Confirmar pago
+    </button>
+
+    <button
+onclick="closePay()"
+style="margin-top:10px; background:red;">
+      Cancelar
+    </button>
+
+  </div>
+
+</div>
+
+<!-- MODAL PERFIL -->
+<div class="profile-modal" id="profileModal">
+
+  <div class="profile-box">
+
+    <h2>👤 Mi cuenta</h2>
+
+    <p>
+      <strong>Nombre:</strong>
+      <span id="showName"></span>
+    </p>
+
+    <p>
+      <strong>Correo:</strong>
+      <span id="showEmail"></span>
+    </p>
+
+    <button
+      onclick="closeProfile()"
+      style="
+        margin-top:10px;
+        background:red;
+      ">
+
+      Cerrar
+
+    </button>
+
+  </div>
+
+</div>
+
+</body>
+
+<script>
+
+/* PRODUCTOS */
+let defaultProducts = [
+
+  {
+    name:"Audífonos",
+    price:99,
+    img:"audi.jpeg",
+    desc:"Sonido premium"
+  },
+
+  {
+    name:"Reloj",
+    price:199,
+    img:"reloj.jpeg",
+    desc:"Elegante"
+  },
+
+  {
+    name:"Tenis",
+    price:499,
+    img:"tenis.jpeg",
+    desc:"Deportivos"
+  },
+
+  {
+    name:"Mochila",
+    price:299,
+    img:"mochila.jpeg",
+    desc:"Amplia"
+  },
+
+  {
+    name:"Playera",
+    price:149,
+    img:"playera.jpeg",
+    desc:"Cómoda"
+  },
+
+  {
+    name:"Gorra",
+    price:149,
+    img:"https://vansmx.vtexassets.com/arquivos/ids/3002875/QAJEN6.png?v=639009350282800000",
+    desc:"Cómoda"
+  },
+
+  {
+    name:"Doritos",
+    price:149,
+    img:"https://lagranbodega.vteximg.com.br/arquivos/ids/290496-1000-1000/7501011167735.jpg?v=638107990204300000",
+    desc:"Cómoda"
+  },
+
+
+  {
+    name:"Coca-Cola",
+    price:149,
+    img:"https://i5.walmartimages.com/asr/a131192c-f55a-4d57-b46d-873646e824b0.0eb78802682982b8c49bfae6f582f41f.jpeg",
+    desc:"Cómoda"
+  }
+
+];
+
+/* PRODUCTOS */
+let products = defaultProducts;
+
+/* VARIABLES */
+let cart = [];
+let current = null;
+let ratingValue = 0;
+
+
+async function loadProducts(){
+
+  try{
+
+    const response =
+    await fetch("obtener_productos.php");
+
+    const data =
+    await response.json();
+
+    console.log(data);
+
+    /* SI HAY PRODUCTOS SQL */
+    if(data.length > 0){
+
+      products = data;
+
+    }else{
+
+      /* SI NO HAY PRODUCTOS */
+      products = defaultProducts;
+
+    }
+
+    render();
+
+  }catch(error){
+
+    console.log(error);
+
+    /* SI FALLA PHP */
+    products = defaultProducts;
+
+    render();
+
+  }
+
+}
+
+loadProducts();
+
+/* RENDER */
+function render(){
+
+  const c =
+  document.getElementById("products");
+
+  c.innerHTML = "";
+
+  products.forEach((p,i)=>{
+
+    c.innerHTML += `
+
+      <div class="product">
+
+        <img src="${p.img}">
+
+        <h3>${p.name}</h3>
+
+        <p>$${p.price}</p>
+
+        <button onclick="add('${p.name}')">
+          Agregar
+        </button>
+
+        <button
+          style="margin-top:10px;"
+          onclick="openModal(${i})">
+
+          Ver
+
+        </button>
+
+      </div>
+    `;
+  });
+
+}
+
+/* MODAL */
+function openModal(i){
+
+  current = products[i];
+
+  document.getElementById("mImg").src =
+  current.img;
+
+  document.getElementById("mName").textContent =
+  current.name;
+
+  document.getElementById("mDesc").textContent =
+  current.desc || "Sin descripción";
+
+  document.getElementById("mPrice").textContent =
+  "$" + current.price;
+
+  loadRating(current.name);
+
+  renderStars();
+
+  document.getElementById("modal")
+  .classList.add("active");
+}
+
+function closeModal(){
+
+  document.getElementById("modal")
+  .classList.remove("active");
+}
+
+/* ESTRELLAS */
+function renderStars(){
+
+  const stars =
+  document.getElementById("stars");
+
+  stars.innerHTML = "";
+
+  for(let i=1;i<=5;i++){
+
+    stars.innerHTML += `
+      <span onclick="selectStar(${i})">
+        ★
+      </span>
+    `;
+  }
+}
+
+function selectStar(v){
+
+  ratingValue = v;
+
+  document
+  .querySelectorAll("#stars span")
+  .forEach((s,i)=>{
+
+    s.classList.toggle(
+      "active",
+      i < v
+    );
+
+  });
+}
+
+/* CALIFICAR */
+function saveRating(){
+
+  if(ratingValue===0){
+
+    alert("Selecciona estrellas");
+
+    return;
+  }
+
+  const key =
+  "rate_" + current.name;
+
+  const data =
+  JSON.parse(localStorage.getItem(key))
+  || [];
+
+  data.push(ratingValue);
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(data)
+  );
+
+  loadRating(current.name);
+
+  alert("Gracias por calificar");
+}
+
+function loadRating(name){
+
+  const data =
+  JSON.parse(localStorage.getItem("rate_"+name))
+  || [];
+
+  if(data.length===0){
+
+    document.getElementById("mRating")
+    .textContent = "Sin calificar";
+
+    return;
+  }
+
+  const avg =
+  (
+    data.reduce((a,b)=>a+b,0)
+    /
+    data.length
+  ).toFixed(1);
+
+  document.getElementById("mRating")
+  .textContent = avg;
+}
+
+/* CARRITO */
+function add(name){
+
+  const p =
+  products.find(x=>x.name===name);
+
+  const e =
+  cart.find(x=>x.name===name);
+
+  if(e){
+
+    e.qty++;
+
+  }else{
+
+    cart.push({
+      ...p,
+      qty:1
+    });
+
+  }
+
+  update();
+}
+
+/* UPDATE */
+function update(){
+
+  const items =
+  document.getElementById("cartItems");
+
+  const totalEl =
+  document.getElementById("total");
+
+  const count =
+  document.getElementById("count");
+
+  items.innerHTML = "";
+
+  let total = 0;
+  let c = 0;
+
+  cart.forEach((i,index)=>{
+
+    total += i.price * i.qty;
+
+    c += i.qty;
+
+    items.innerHTML += `
+
+      <div style="
+        margin-bottom:10px;
+        border-bottom:1px solid #ccc;
+        padding-bottom:10px;
+      ">
+
+        ${i.name} x${i.qty}
+
+        <button
+          style="margin-top:5px;"
+          onclick="remove(${index})">
+
+          Eliminar
+
+        </button>
+
+      </div>
+    `;
+  });
+
+  totalEl.textContent = total;
+
+  count.textContent = c;
+}
+
+function remove(i){
+
+  cart.splice(i,1);
+
+  update();
+}
+
+function clearCart(){
+
+  cart = [];
+
+  update();
+}
+
+/* PANEL */
+function toggleCart(){
+
+  document
+  .getElementById("cart")
+  .classList.toggle("active");
+
+  document
+  .getElementById("overlay")
+  .classList.toggle("active");
+}
+
+/* BUSCADOR */
+document
+.getElementById("search")
+.addEventListener("input",e=>{
+
+  const v =
+  e.target.value.toLowerCase();
+
+  const f =
+  products.filter(p=>
+    p.name.toLowerCase().includes(v)
+  );
+
+  const c =
+  document.getElementById("products");
+
+  c.innerHTML = "";
+
+  f.forEach((p)=>{
+
+    c.innerHTML += `
+
+      <div class="product">
+
+        <img src="${p.img}">
+
+        <h3>${p.name}</h3>
+
+        <p>$${p.price}</p>
+
+        <button onclick="add('${p.name}')">
+          Agregar
+        </button>
+
+        <button
+          style="margin-top:10px;"
+          onclick="openModal(products.indexOf(p))">
+
+          Ver
+
+        </button>
+
+      </div>
+    `;
+  });
+
+});
+
+/* PAGO */
+function checkout(){
+
+  if(cart.length <= 0){
+
+    alert("El carrito está vacío");
+    return;
+  }
+
+  document
+  .getElementById("payModal")
+  .style.display = "flex";
+}
+
+function closePay(){
+
+  document
+  .getElementById("payModal")
+  .classList.remove("active");
+}
+
+function confirmPay(){
+
+  const selected =
+  document.querySelector(
+    'input[name="pay"]:checked'
+  );
+
+  if(!selected){
+
+    alert("Selecciona método de pago");
+
+    return;
+  }
+
+  alert(
+    "Pago realizado con "
+    + selected.value
+    + " ✅"
+  );
+
+  clearCart();
+
+  closePay();
+}
+
+
+/* COMPRAR */
+function checkout(){
+
+  if(cart.length <= 0){
+
+    alert("El carrito está vacío");
+
+    return;
+  }
+
+  document
+  .getElementById("payModal")
+  .style.display = "flex";
+
+}
+
+/* CONFIRMAR */
+/* CERRAR MODAL PAGO */
+function closePay(){
+
+  document
+  .getElementById("payModal")
+  .style.display = "none";
+}
+
+/* CONFIRMAR PAGO */
+function confirmPay(){
+
+  const selected =
+  document.querySelector(
+    'input[name="pay"]:checked'
+  );
+
+  if(!selected){
+
+    alert("Selecciona método de pago");
+    return;
+  }
+
+  alert(
+    "Pago realizado con " +
+    selected.value +
+    " ✅"
+  );
+
+  cart = [];
+
+  update();
+
+  closePay();
+}
+
+
+/* ABRIR PERFIL */
+function openProfile(){
+
+  document
+  .getElementById("profileModal")
+  .classList.add("active");
+
+  document.getElementById("showName").textContent =
+    localStorage.getItem("userName") || "Sin nombre";
+
+  document.getElementById("showEmail").textContent =
+    localStorage.getItem("userEmail") || "Sin correo";
+}
+
+/* CERRAR PERFIL */
+function closeProfile(){
+
+  document
+  .getElementById("profileModal")
+  .classList.remove("active");
+}
+
+</script>
+
+
+</body>
+</html>

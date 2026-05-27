@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Vendedor</title>
+
+<style>
+
+/* ===== ESTILO GENERAL ===== */
+body{
+  margin:0;
+  font-family:'Segoe UI';
+  background:#f5f5f5;
+}
+
+/* ===== HEADER ===== */
+header{
+  background:#006747;
+  color:white;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  font-size:24px;
+  font-weight:bold;
+  color:#C5A059;
+}
+
+/* ===== CONTENEDOR ===== */
+.container{
+  padding:20px;
+}
+
+/* ===== FORMULARIO ===== */
+.form-box{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+
+.form-box h2{
+  margin-top:0;
+}
+
+/* Inputs */
+input,
+textarea{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  box-sizing:border-box;
+}
+
+textarea{
+  resize:none;
+  height:100px;
+}
+
+/* Botón */
+button{
+  background:#006747;
+  color:white;
+  border:none;
+  padding:12px;
+  width:100%;
+  border-radius:20px;
+  cursor:pointer;
+  margin-top:15px;
+  transition:0.3s;
+}
+
+/* Animación */
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+button:active{
+  transform:scale(0.95);
+}
+
+/* ===== PRODUCTOS ===== */
+.products{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:15px;
+}
+
+/* Tarjeta */
+.card{
+  background:white;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Imagen */
+.card img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+}
+
+/* Contenido */
+.card-content{
+  padding:15px;
+}
+
+.price{
+  color:#006747;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.description{
+  color:#555;
+  margin-top:10px;
+}
+
+/* Botón eliminar */
+.delete-btn{
+  background:#d62828;
+}
+
+/* Responsive */
+@media(max-width:700px){
+  .products{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="logo">POTROTIENDA - VENDEDOR</div>
+  <button
+    onclick="window.location.href='Chat_Vendedor.html'"
+    style="width:auto;background:#C5A059;color:#006747;font-weight:bold;padding:10px 18px;">
+    💬 Ver chats
+  </button>
+</header>
+
+<div class="container">
+
+  <!-- ===== FORMULARIO AGREGAR PRODUCTO ===== -->
+  <div class="form-box">
+
+    <h2>Agregar producto</h2>
+
+    <!-- Nombre -->
+    <input type="text" id="name" placeholder="Nombre del producto">
+
+    <!-- Precio -->
+    <input type="number" id="price" placeholder="Precio">
+
+    <!-- Imagen desde archivo -->
+    <input type="file" id="image" accept="image/*">
+
+    <!-- Descripción -->
+    <textarea id="description" placeholder="Descripción del producto"></textarea>
+
+    <!-- Botón agregar -->
+    <button onclick="addProduct()">Agregar producto</button>
+
+  </div>
+
+  <!-- ===== LISTA DE PRODUCTOS ===== -->
+  <div class="products" id="productList"></div>
+
+</div>
+
+<script>
+
+/* ===== ARRAY DE PRODUCTOS ===== */
+let products = [];
+
+async function loadSellerProducts(){
+
+  try{
+
+    const response =
+    await fetch("obtener_productos.php");
+
+    const data =
+    await response.json();
+
+   products = data.map(p=>({
+
+  name:p.name,
+  price:p.price,
+  img:p.img,
+  desc:p.desc
+
+}));
+
+    renderProducts();
+
+  }catch(error){
+
+    console.log(error);
+
+  }
+
+}
+
+loadSellerProducts();
+
+
+/* ===== MOSTRAR PRODUCTOS ===== */
+function renderProducts(){
+
+  // Obtener contenedor
+  const container = document.getElementById("productList");
+
+  // Limpiar contenido
+  container.innerHTML = "";
+
+  // Recorrer productos
+  products.forEach((p,index)=>{
+
+    container.innerHTML += `
+      <div class="card">
+
+        <!-- Imagen -->
+        <img src="${p.img}" alt="${p.name}">
+
+        <!-- Información -->
+        <div class="card-content">
+
+          <h3>${p.name}</h3>
+
+          <div class="price">$${p.price}</div>
+
+          <div class="description">${p.desc}</div>
+
+          <!-- Botón eliminar -->
+          <button class="delete-btn" onclick="deleteProduct(${index})">
+            Eliminar
+          </button>
+
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* ===== AGREGAR PRODUCTO ===== */
+async function addProduct(){
+
+  const name =
+  document.getElementById("name").value;
+
+  const price =
+  document.getElementById("price").value;
+
+  const imageFile =
+  document.getElementById("image").files[0];
+
+  const description =
+  document.getElementById("description").value;
+
+  if(!name || !price || !imageFile || !description){
+
+    alert("Completa todos los campos");
+
+    return;
+  }
+
+  const reader =
+  new FileReader();
+
+  reader.readAsDataURL(imageFile);
+
+  reader.onload = async function(){
+
+    const product = {
+
+      nombre: name,
+      precio: parseFloat(price),
+      imagen: reader.result,
+      descripcion: description
+
+    };
+
+    console.log(product);
+
+    try{
+
+      const response =
+      await fetch("guardar_producto.php",{
+
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify(product)
+
+      });
+
+      const data =
+      await response.json();
+
+      console.log(data);
+
+      if(data.success){
+
+products.push({
+
+  name:name,
+  price:price,
+  img:reader.result,
+  desc:description
+
+});
+
+renderProducts();
+
+      }else{
+
+        alert(
+          "Error: " +
+          data.error
+        );
+
+      }
+
+    }catch(error){
+
+      console.log(error);
+
+      alert(
+        "Error conectando con PHP"
+      );
+
+    }
+
+  };
+
+}
+/* ===== ELIMINAR PRODUCTO ===== */
+function deleteProduct(index){
+
+  // Eliminar producto
+  products.splice(index,1);
+
+  // Actualizar pantalla
+  renderProducts();
+}
+
+</script>
+
+</body>
+</html>

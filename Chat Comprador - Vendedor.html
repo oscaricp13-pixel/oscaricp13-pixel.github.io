@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Comprador - Vendedor</title>
+
+<style>
+
+/* ===== ESTILO GENERAL ===== */
+body{
+  margin:0;
+  font-family:'Segoe UI';
+  background:#f5f5f5;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+/* ===== CONTENEDOR CHAT ===== */
+.chat-container{
+  width:95%;
+  max-width:450px;
+  height:90vh;
+  background:white;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 5px 20px rgba(0,0,0,0.15);
+  display:flex;
+  flex-direction:column;
+}
+
+/* ===== HEADER ===== */
+.chat-header{
+  background:#006747;
+  color:white;
+  padding:15px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* Foto perfil */
+.chat-header img{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+/* Estado */
+.status{
+  font-size:12px;
+  color:#d4ffd9;
+}
+
+/* ===== MENSAJES ===== */
+.chat-messages{
+  flex:1;
+  padding:15px;
+  overflow-y:auto;
+  background:#e5ddd5;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* Mensaje general */
+.message{
+  max-width:75%;
+  padding:10px 15px;
+  border-radius:15px;
+  animation:fade .2s ease;
+  word-wrap:break-word;
+}
+
+/* Mensaje comprador */
+.buyer{
+  align-self:flex-end;
+  background:#dcf8c6;
+}
+
+/* Mensaje vendedor */
+.seller{
+  align-self:flex-start;
+  background:white;
+}
+
+/* Animación */
+@keyframes fade{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* ===== INPUT ===== */
+.chat-input{
+  display:flex;
+  padding:10px;
+  background:white;
+  gap:10px;
+}
+
+/* Caja texto */
+.chat-input input{
+  flex:1;
+  padding:12px;
+  border-radius:25px;
+  border:1px solid #ccc;
+  outline:none;
+}
+
+/* Botón */
+.chat-input button{
+  background:#006747;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:50px;
+  height:50px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+/* Hover */
+.chat-input button:hover{
+  transform:scale(1.05);
+}
+
+/* Click */
+.chat-input button:active{
+  transform:scale(0.9);
+}
+
+/* Responsive */
+@media(max-width:600px){
+
+  .chat-container{
+    width:100%;
+    height:100vh;
+    border-radius:0;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ===== CHAT ===== -->
+<div class="chat-container">
+
+  <!-- HEADER -->
+  <div class="chat-header">
+
+    <!-- Imagen -->
+    <img src="https://i.pravatar.cc/100?img=12">
+
+    <div>
+      <div><strong>Vendedor</strong></div>
+      <div class="status">En línea</div>
+    </div>
+
+  </div>
+
+  <!-- MENSAJES -->
+  <div class="chat-messages" id="messages">
+
+    <!-- Mensaje vendedor -->
+    <div class="message seller">
+      Hola 👋 ¿En qué puedo ayudarte?
+    </div>
+
+  </div>
+
+  <!-- INPUT -->
+  <div class="chat-input">
+
+    <!-- Caja mensaje -->
+    <input type="text" id="msg" placeholder="Escribe un mensaje...">
+
+    <!-- Botón enviar -->
+    <button onclick="sendMessage()">➤</button>
+
+  </div>
+
+</div>
+
+<script>
+
+/* ===== ENVIAR MENSAJE ===== */
+function sendMessage(){
+
+  // Obtener input
+  const input = document.getElementById("msg");
+
+  // Obtener texto
+  const text = input.value.trim();
+
+  // Validar vacío
+  if(text === "") return;
+
+  // Obtener contenedor mensajes
+  const box = document.getElementById("messages");
+
+  // Crear mensaje comprador
+  const msg = document.createElement("div");
+
+  // Clases
+  msg.classList.add("message","buyer");
+
+  // Texto
+  msg.textContent = text;
+
+  // Agregar mensaje
+  box.appendChild(msg);
+
+  // Scroll abajo
+  box.scrollTop = box.scrollHeight;
+
+  // Limpiar input
+  input.value = "";
+
+  // Simulación respuesta vendedor
+  setTimeout(()=>{
+
+    // Crear respuesta
+    const reply = document.createElement("div");
+
+    // Clases
+    reply.classList.add("message","seller");
+
+    // Texto respuesta
+    reply.textContent = "Gracias por tu mensaje 📦";
+
+    // Agregar respuesta
+    box.appendChild(reply);
+
+    // Scroll abajo
+    box.scrollTop = box.scrollHeight;
+
+  },1000);
+
+}
+
+/* ===== ENVIAR CON ENTER ===== */
+document.getElementById("msg").addEventListener("keypress",function(e){
+
+  if(e.key === "Enter"){
+    sendMessage();
+  }
+
+});
+
+</script>
+
+</body>
+</html>
